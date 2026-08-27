@@ -1,6 +1,6 @@
 {
   "name": "yaml-drift",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Convert YAML to JSON and get a report of every value whose meaning changed.",
   "type": "module",
   "license": "MIT",
