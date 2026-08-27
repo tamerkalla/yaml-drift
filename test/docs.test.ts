@@ -132,12 +132,19 @@ describe('every code example in VERIFY.md is executed and its output matches', (
     test(`example ${i + 1} reproduces the claimed output`, () => {
       const dir = mkdtempSync(join(tmpdir(), 'yaml-drift-verify-run-'));
       try {
-        // The doc installs from the registry; the test installs the tarball
-        // this repository just built, offline, so no network is required.
-        const prepared = example.code.replace(
-          'npm install yaml-drift@latest',
-          `npm install --offline ${JSON.stringify(tarballPath)}`,
-        );
+        // The doc installs from the registry; the test instead extracts the
+        // tarball this repository just built and copies yaml@2.9.0 from this
+        // repo's own node_modules, reproducing the installed layout without
+        // `npm install` — which, for a fresh lockfile-less project, needs to
+        // fetch package *metadata* (not just a cached tarball) to resolve
+        // the `yaml` dependency, and no test may reach the network.
+        const replacement = [
+          'mkdir -p node_modules',
+          `tar -xzf ${JSON.stringify(tarballPath)} -C node_modules`,
+          'mv node_modules/package node_modules/yaml-drift',
+          `cp -r ${JSON.stringify(join(ROOT, 'node_modules', 'yaml'))} node_modules/yaml`,
+        ].join('\n');
+        const prepared = example.code.replace('npm install yaml-drift@latest', replacement);
         const result = spawnSync('bash', ['-c', prepared], { cwd: dir, encoding: 'utf8' });
         expect(result.status).toBe(0);
         expect(result.stdout.trim()).toBe(example.expected.trim());

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
-import { mkdtempSync, rmSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync, existsSync, readdirSync, cpSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -12,6 +12,27 @@ function run(cmd: string, args: string[], cwd: string): { status: number | null;
   const result = spawnSync(cmd, args, { cwd, encoding: 'utf8' });
   if (result.error) throw result.error;
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
+}
+
+// Installs a packed tarball into node_modules by extracting it directly and
+// copying yaml@2.9.0 from this repo's own node_modules, rather than running
+// `npm install`. A real `npm install` of a fresh, lockfile-less consumer
+// project needs to fetch package *metadata* (not just a cached tarball) to
+// resolve the `yaml` dependency, which `npm ci` alone never caches — so
+// `--offline` fails on a runner whose cache was only ever populated by
+// `npm ci` (as CI's is), and a non-offline install would reach the network,
+// which no test may do. Extracting the tarball and copying the one runtime
+// dependency reproduces the exact installed layout with neither problem.
+function installTarball(tarballPath: string, installDir: string): string {
+  const nodeModules = join(installDir, 'node_modules');
+  mkdirSync(nodeModules, { recursive: true });
+  const extract = run('tar', ['-xzf', tarballPath, '-C', nodeModules], installDir);
+  expect(extract.status).toBe(0);
+  const pkgDir = join(nodeModules, 'yaml-drift');
+  cpSync(join(nodeModules, 'package'), pkgDir, { recursive: true });
+  rmSync(join(nodeModules, 'package'), { recursive: true, force: true });
+  cpSync(join(REPO_ROOT, 'node_modules', 'yaml'), join(nodeModules, 'yaml'), { recursive: true });
+  return pkgDir;
 }
 
 describe('packed tarball smoke test', () => {
@@ -29,10 +50,11 @@ describe('packed tarball smoke test', () => {
     expect(existsSync(tarballPath)).toBe(true);
 
     installDir = mkdtempSync(join(tmpdir(), 'yaml-drift-install-'));
-    writeFileSync(join(installDir, 'package.json'), JSON.stringify({ name: 'yaml-drift-consumer', version: '0.0.0', private: true }));
-    const install = run('npm', ['install', '--offline', tarballPath], installDir);
-    expect(install.status).toBe(0);
-    pkgDir = join(installDir, 'node_modules', 'yaml-drift');
+    writeFileSync(
+      join(installDir, 'package.json'),
+      JSON.stringify({ name: 'yaml-drift-consumer', version: '0.0.0', private: true }),
+    );
+    pkgDir = installTarball(tarballPath, installDir);
     expect(existsSync(pkgDir)).toBe(true);
   }, 120_000);
 
