@@ -1,7 +1,58 @@
 import { describe, expect, test } from 'vitest';
 import * as YAML from 'yaml';
-import { convert, inspect } from '../src/index.js';
+import { convert, inspect, type Result } from '../src/index.js';
 import { CORPUS } from './corpus.js';
+
+describe('6.2 json is always a string; a cycle serializes as null', () => {
+  test('a self-referential alias does not throw, and json is valid, parseable JSON', () => {
+    const text = '&root\nself: *root\n';
+    let result: Result | undefined;
+    expect(() => {
+      result = convert(text);
+    }).not.toThrow();
+    expect(typeof result!.json).toBe('string');
+    expect(JSON.parse(result!.json)).toEqual({ self: null });
+    expect((result!.value as { self: unknown }).self).toBe(null);
+    expect(result!.changes.some((c) => c.kind === 'cycle')).toBe(true);
+  });
+
+  test('a cyclic document does throw when strict is true, because cycle is severity loss', () => {
+    expect(() => convert('&root\nself: *root\n', { strict: true })).toThrow();
+  });
+});
+
+describe('6.5 non-finite tokens report after: null', () => {
+  test.each(['limit: .inf\n', 'floor: -.inf\n', 'ratio: .nan\n'])('%s', (text) => {
+    const [change] = inspect(text);
+    expect(change.kind).toBe('non-finite');
+    expect(change.severity).toBe('loss');
+    expect(change.after).toBe('null');
+  });
+});
+
+describe('6.6 key-collision is reported once, anchored on the key that loses', () => {
+  test('the later, same-typed key wins the value; the change is anchored at the earlier, losing key', () => {
+    const text = '1: one\n"1": two\n';
+    const result = convert(text);
+    expect(result.value).toEqual({ '1': 'two' });
+
+    const collisions = result.changes.filter((c) => c.kind === 'key-collision');
+    expect(collisions.length).toBe(1);
+    expect(collisions[0]!.pointer).toBe('/1');
+    // Line 1 is `1: one` — the pair that lost. Line 2 is `"1": two` — the winner.
+    expect(collisions[0]!.line).toBe(1);
+  });
+});
+
+describe('6.7 merge-key keeps << as a literal JSON key', () => {
+  test('a << pair is not merged into its parent mapping', () => {
+    const text = 'base: &b\n  cpu: 1\nchild:\n  <<: *b\n  mem: 2\n';
+    const result = convert(text);
+    expect(result.value).toEqual({ base: { cpu: 1 }, child: { '<<': { cpu: 1 }, mem: 2 } });
+    const kinds = new Set(result.changes.map((c) => c.kind));
+    expect(kinds).toEqual(new Set(['alias', 'dialect', 'merge-key']));
+  });
+});
 
 describe('6.10 determinism', () => {
   test('two calls on the same input produce deeply equal results', () => {
