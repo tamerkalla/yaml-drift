@@ -1,0 +1,113 @@
+name: Release
+
+# push to main      fires exactly once: on the agent's push, while package.json
+#                   still reads 0.0.0. Release 1 needs no human action. Later
+#                   pushes are no-ops release-wise — Plan sees a non-0.0.0
+#                   version and skips publishing while still verifying.
+# workflow_dispatch every release after the first.
+#
+# No tag trigger. This workflow creates the tag itself; a tag trigger would race
+# it. The version commit is pushed with GITHUB_TOKEN, which does not retrigger
+# workflows — and even if it did, the version is no longer 0.0.0. Two guards.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      bump:
+        type: choice
+        default: patch
+        options: [patch, minor, major]
+      auth:
+        description: 'oidc = trusted publishing. token = FIRST PUBLISH ONLY.'
+        type: choice
+        default: oidc
+        options: [oidc, token]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      # One step decides everything, so every later step is a string comparison.
+      # ubuntu-latest ships Node, so this runs before setup-node.
+      - name: Plan
+        id: plan
+        run: |
+          v=$(node -p "require('./package.json').version")
+          echo "version_before=$v" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "release=true"            >> "$GITHUB_OUTPUT"
+            echo "bump=${{ inputs.bump }}" >> "$GITHUB_OUTPUT"
+            echo "auth=${{ inputs.auth }}" >> "$GITHUB_OUTPUT"
+          elif [ "$v" = "0.0.0" ]; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "bump=minor"   >> "$GITHUB_OUTPUT"
+            echo "auth=token"   >> "$GITHUB_OUTPUT"
+          else
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "bump=none"     >> "$GITHUB_OUTPUT"
+            echo "auth=none"     >> "$GITHUB_OUTPUT"
+          fi
+
+      # Two setup steps, not one. A registry URL makes setup-node write an
+      # .npmrc carrying a token placeholder and export it JOB-WIDE; npm then
+      # finds a credential, never attempts the OIDC exchange, and authenticates
+      # as nobody. The OIDC path must not carry that input at all.
+      - uses: actions/setup-node@v4
+        if: ${{ steps.plan.outputs.auth == 'token' }}
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - uses: actions/setup-node@v4
+        if: ${{ steps.plan.outputs.auth != 'token' }}
+        with:
+          node-version: 22
+
+      # Node 22 ships npm 10; OIDC publishing needs 11.5.1+
+      - run: npm install -g npm@latest
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+      - name: Bump and tag
+        id: bump
+        if: ${{ steps.plan.outputs.release == 'true' }}
+        run: |
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          npm version '${{ steps.plan.outputs.bump }}' -m 'Release v%s'
+          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      # Publish first: a failed publish leaves main untouched and the run is
+      # repeatable. The reverse strands a version in git that is not on npm.
+      - name: Publish (token)
+        if: ${{ steps.plan.outputs.release == 'true' && steps.plan.outputs.auth == 'token' }}
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # No auth variable in env: under OIDC it must be absent entirely.
+      - name: Publish (OIDC)
+        if: ${{ steps.plan.outputs.release == 'true' && steps.plan.outputs.auth != 'token' }}
+        run: npm publish --access public
+
+      - name: Push version commit and tag
+        if: ${{ steps.plan.outputs.release == 'true' }}
+        run: git push origin HEAD:main --follow-tags
+
+      # Last, deliberately: npm and git are already correct, so a failure here
+      # leaves both untouched and the release can be cut by hand from the tag.
+      - name: Create GitHub Release
+        if: ${{ steps.plan.outputs.release == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "v${{ steps.bump.outputs.version }}" --title "v${{ steps.bump.outputs.version }}" --generate-notes
