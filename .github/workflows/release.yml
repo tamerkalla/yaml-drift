@@ -4,7 +4,11 @@ name: Release
 #                   still reads 0.0.0. Release 1 needs no human action. Later
 #                   pushes are no-ops release-wise — Plan sees a non-0.0.0
 #                   version and skips publishing while still verifying.
-# workflow_dispatch every release after the first.
+# workflow_dispatch every release after the first, with a choice of auth:
+#                   oidc (trusted publishing) or token for the general case,
+#                   or stage to bump and stage the version without needing
+#                   2FA at dispatch time, leaving the tag, push and release
+#                   for a later run once a human has approved the stage.
 #
 # No tag trigger. This workflow creates the tag itself; a tag trigger would race
 # it. The version commit is pushed with GITHUB_TOKEN, which does not retrigger
