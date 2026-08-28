@@ -120,6 +120,18 @@ describe('.github/workflows/release.yml', () => {
     expect(releaseIdx).toBeGreaterThan(pushIdx);
   });
 
+  test("the bump step's version output is read from package.json, never captured from npm version's stdout", () => {
+    // npm version prints the new version WITH a leading "v" ("v0.1.2"). The
+    // release step does `gh release create "v${{ steps.bump.outputs.version }}"`,
+    // so if that output were ever npm version's own stdout instead of a fresh
+    // read of package.json, the tag and release title would come out "vv0.1.2" —
+    // exactly the residue found in three sibling repositories' release history.
+    const bump = release.jobs.release.steps.find((s) => s.name === 'Bump and tag');
+    const run = bump?.run ?? '';
+    expect(run).toMatch(/\$\(node -p "require\('\.\/package\.json'\)\.version"\)/);
+    expect(run).not.toMatch(/\$\(npm version/);
+  });
+
   test('the token publish step carries NODE_AUTH_TOKEN; the OIDC step carries no auth env', () => {
     const steps = release.jobs.release.steps;
     const tokenStep = steps.find((s) => s.name === 'Publish (token)')!;
