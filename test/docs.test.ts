@@ -38,6 +38,7 @@ describe('README.md and VERIFY.md structure', () => {
       '[![build](https://github.com/tamerkalla/yaml-drift/actions/workflows/release.yml/badge.svg)](https://github.com/tamerkalla/yaml-drift/actions/workflows/release.yml)',
       '[![npm](https://img.shields.io/npm/v/yaml-drift.svg)](https://www.npmjs.com/package/yaml-drift)',
       '[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)',
+      '[![provenance](https://img.shields.io/badge/provenance-attested-brightgreen.svg)](https://www.npmjs.com/package/yaml-drift)',
     ].join('\n');
     const badgeIndex = readme.indexOf(badges);
     const hookIndex = readme.indexOf('**Your YAML config does not survive the trip to JSON, and nothing tells you.**');

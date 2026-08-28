@@ -5,6 +5,7 @@
 [![build](https://github.com/tamerkalla/yaml-drift/actions/workflows/release.yml/badge.svg)](https://github.com/tamerkalla/yaml-drift/actions/workflows/release.yml)
 [![npm](https://img.shields.io/npm/v/yaml-drift.svg)](https://www.npmjs.com/package/yaml-drift)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![provenance](https://img.shields.io/badge/provenance-attested-brightgreen.svg)](https://www.npmjs.com/package/yaml-drift)
 
 Forty ordinary config documents — Kubernetes-shaped, CI-shaped,
 front-matter-shaped — converted to JSON with `yaml@2.9.0`. Thirty-four of them
