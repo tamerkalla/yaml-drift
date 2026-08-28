@@ -88,7 +88,7 @@ describe('.github/workflows/release.yml', () => {
     expect(on.push.branches).toEqual(['main']);
     expect(on.workflow_dispatch.inputs.bump.options).toEqual(['patch', 'minor', 'major']);
     expect(on.workflow_dispatch.inputs.bump.default).toBe('patch');
-    expect(on.workflow_dispatch.inputs.auth.options).toEqual(['oidc', 'token']);
+    expect(on.workflow_dispatch.inputs.auth.options).toEqual(['oidc', 'token', 'stage']);
     expect(on.workflow_dispatch.inputs.auth.default).toBe('oidc');
   });
 
@@ -138,6 +138,23 @@ describe('.github/workflows/release.yml', () => {
     const oidcStep = steps.find((s) => s.name === 'Publish (OIDC)')!;
     expect(tokenStep.env?.NODE_AUTH_TOKEN).toBeTruthy();
     expect(oidcStep.env).toBeUndefined();
+  });
+
+  test('the stage path stages rather than publishes, and stops before pushing the tag or cutting a release', () => {
+    // Staging leaves nothing live on the registry until a human runs
+    // `npm stage approve` with their own 2FA. Pushing the version tag or
+    // cutting a GitHub Release before that would let git and npm disagree
+    // if approval is delayed or rejected, so the stage path must exclude
+    // both — unlike the token and OIDC paths, which do both immediately
+    // after a successful publish.
+    const steps = release.jobs.release.steps;
+    const stageStep = steps.find((s) => s.name === 'Publish (stage)');
+    const pushStep = steps.find((s) => s.name === 'Push version commit and tag');
+    const releaseStep = steps.find((s) => s.name === 'Create GitHub Release');
+    expect(stageStep?.run).toBe('npm stage publish --access public');
+    expect(stageStep?.if).toContain("auth == 'stage'");
+    expect(pushStep?.if).toContain("auth != 'stage'");
+    expect(releaseStep?.if).toContain("auth != 'stage'");
   });
 
   test('setup-node is configured twice, gated on auth, and only the token path sets a registry-url', () => {

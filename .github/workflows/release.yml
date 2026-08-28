@@ -19,10 +19,10 @@ on:
         default: patch
         options: [patch, minor, major]
       auth:
-        description: 'oidc = trusted publishing. token = FIRST PUBLISH ONLY.'
+        description: 'oidc = trusted publishing. token = FIRST PUBLISH ONLY. stage = defer 2FA to a later npm stage approve.'
         type: choice
         default: oidc
-        options: [oidc, token]
+        options: [oidc, token, stage]
 
 jobs:
   release:
@@ -97,17 +97,36 @@ jobs:
 
       # No auth variable in env: under OIDC it must be absent entirely.
       - name: Publish (OIDC)
-        if: ${{ steps.plan.outputs.release == 'true' && steps.plan.outputs.auth != 'token' }}
+        if: ${{ steps.plan.outputs.release == 'true' && steps.plan.outputs.auth == 'oidc' }}
         run: npm publish --access public
 
+      # Stages the version rather than publishing it — npm accepts this from
+      # any token type with no 2FA prompt, deferring proof-of-presence to a
+      # human running `npm stage approve` later. package.json is already
+      # bumped by this point, so this stages the same version the other two
+      # paths would push straight to the registry.
+      - name: Publish (stage)
+        if: ${{ steps.plan.outputs.release == 'true' && steps.plan.outputs.auth == 'stage' }}
+        run: npm stage publish --access public
+
+      # Deliberately excludes stage: nothing is live on the registry yet for
+      # that path, and pushing the tag or cutting a Release before it is
+      # would let git and npm disagree if approval is delayed or rejected.
       - name: Push version commit and tag
-        if: ${{ steps.plan.outputs.release == 'true' }}
+        if: ${{ steps.plan.outputs.release == 'true' && steps.plan.outputs.auth != 'stage' }}
         run: git push origin HEAD:main --follow-tags
 
       # Last, deliberately: npm and git are already correct, so a failure here
       # leaves both untouched and the release can be cut by hand from the tag.
       - name: Create GitHub Release
-        if: ${{ steps.plan.outputs.release == 'true' }}
+        if: ${{ steps.plan.outputs.release == 'true' && steps.plan.outputs.auth != 'stage' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "v${{ steps.bump.outputs.version }}" --title "v${{ steps.bump.outputs.version }}" --generate-notes
+
+      # The stage path stops here on purpose — see above. This just leaves a
+      # record of what to do next in the run's own summary.
+      - name: Report the staged version
+        if: ${{ steps.plan.outputs.release == 'true' && steps.plan.outputs.auth == 'stage' }}
+        run: |
+          echo "::notice::${{ steps.bump.outputs.version }} is staged, not published. Run 'npm stage list' to find its stage id, then 'npm stage approve <id>' with 2FA to publish it. Once it is live, push the version commit and tag and cut the GitHub Release by hand, or with a follow-up oidc/token dispatch."
