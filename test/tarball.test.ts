@@ -18,7 +18,7 @@ function run(cmd: string, args: string[], cwd: string): { status: number | null;
 // copying yaml@2.9.0 from this repo's own node_modules, rather than running
 // `npm install`. A real `npm install` of a fresh, lockfile-less consumer
 // project needs to fetch package *metadata* (not just a cached tarball) to
-// resolve the `yaml` dependency, which `npm ci` alone never caches — so
+// resolve the `yaml` dependency, which `npm ci` alone never caches, so
 // `--offline` fails on a runner whose cache was only ever populated by
 // `npm ci` (as CI's is), and a non-offline install would reach the network,
 // which no test may do. Extracting the tarball and copying the one runtime

@@ -136,7 +136,7 @@ describe('every code example in VERIFY.md is executed and its output matches', (
         // The doc installs from the registry; the test instead extracts the
         // tarball this repository just built and copies yaml@2.9.0 from this
         // repo's own node_modules, reproducing the installed layout without
-        // `npm install` — which, for a fresh lockfile-less project, needs to
+        // `npm install`: which, for a fresh lockfile-less project, needs to
         // fetch package *metadata* (not just a cached tarball) to resolve
         // the `yaml` dependency, and no test may reach the network.
         const replacement = [

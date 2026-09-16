@@ -8,10 +8,10 @@ import { convert, inspect, YamlDriftError } from '../src/index.js';
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 // ---------------------------------------------------------------------------
-// Section 9 obligation 5 — adversarial input for every public entry point.
+// Section 9 obligation 5, adversarial input for every public entry point.
 // ---------------------------------------------------------------------------
 
-describe('adversarial input — convert', () => {
+describe('adversarial input: convert', () => {
   test('a non-string input throws BAD_INPUT with an empty change list', () => {
     try {
       convert(42 as unknown as string);
@@ -95,7 +95,7 @@ describe('numeric edge cases beyond the corpus', () => {
   });
 });
 
-describe('adversarial input — inspect', () => {
+describe('adversarial input: inspect', () => {
   test('a non-string input throws BAD_INPUT with an empty change list', () => {
     try {
       inspect(null as unknown as string);
@@ -142,7 +142,7 @@ describe('adversarial input — inspect', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Section 9 obligation 6 — every quality gate negative-tested.
+// Section 9 obligation 6, every quality gate negative-tested.
 // ---------------------------------------------------------------------------
 
 describe('gate enforcement', () => {
@@ -158,11 +158,11 @@ describe('gate enforcement', () => {
   });
 
   test('the coverage threshold enforces rather than merely advises', () => {
-    // Builds a throwaway package (never committed — it lives under a
+    // Builds a throwaway package (never committed, it lives under a
     // gitignored, transient directory) with a function that is only
     // partially exercised by its own test, configures an unreachable 100%
     // coverage threshold, and asserts that a real vitest run against it
-    // exits with a failure — proving the gate actually fails a run rather
+    // exits with a failure, proving the gate actually fails a run rather
     // than only printing a warning.
     const dir = mkdtempSync(join(REPO_ROOT, '.tmp-coverage-gate-'));
     try {
@@ -205,7 +205,7 @@ describe('gate enforcement', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Section 9 obligation 11 — no conditional skips anywhere.
+// Section 9 obligation 11, no conditional skips anywhere.
 // ---------------------------------------------------------------------------
 
 describe('no conditional skips', () => {

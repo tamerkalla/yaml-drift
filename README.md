@@ -7,8 +7,8 @@
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![provenance](https://img.shields.io/badge/provenance-attested-brightgreen.svg)](https://www.npmjs.com/package/yaml-drift)
 
-Forty ordinary config documents — Kubernetes-shaped, CI-shaped,
-front-matter-shaped — converted to JSON with `yaml@2.9.0`. Thirty-four of them
+Forty ordinary config documents, Kubernetes-shaped, CI-shaped,
+front-matter-shaped, converted to JSON with `yaml@2.9.0`. Thirty-four of them
 come out meaning something other than what they said. The parser mentions one.
 
 | | |
@@ -58,8 +58,8 @@ dialect at /mode: 493 -> 755
 number-literal at /mode: 0755 -> 755
 ```
 
-`region` reads as the string `"NO"` here, but a YAML 1.1 reader — PyYAML, Ruby's
-Psych, `sigs.k8s.io/yaml` — resolves the same unquoted scalar as the boolean
+`region` reads as the string `"NO"` here, but a YAML 1.1 reader, PyYAML, Ruby's
+Psych, `sigs.k8s.io/yaml`: resolves the same unquoted scalar as the boolean
 `false`. `mode` changes twice: YAML 1.1 treats a leading zero as octal (`0755`
 is `493`), and even under the 1.2 rules the literal text `0755` doesn't survive
 being turned into the number `755`.
@@ -104,7 +104,7 @@ needed to try it first: `npx yaml-drift`.
 ## What this is not
 
 - **Not a YAML formatter.** It doesn't serialize JavaScript back to YAML, and it
-  never rewrites your source file — it only reports.
+  never rewrites your source file, it only reports.
 - **Not a multi-document tool.** A stream with more than one `---`-separated
   document is rejected outright; the change model is per-document.
 - **Not a fixer.** Repairing the YAML would mean picking a dialect on the

@@ -1,7 +1,7 @@
 # Verifying yaml-drift
 
-This reproduces the headline claim of the README — **34 of 40** ordinary config
-documents change meaning on the way to JSON — from the published package, in a
+This reproduces the headline claim of the README, **34 of 40** ordinary config
+documents change meaning on the way to JSON, from the published package, in a
 clean directory. It does not require this repository to be checked out.
 
 ```bash

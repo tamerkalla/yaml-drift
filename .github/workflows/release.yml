@@ -2,7 +2,7 @@ name: Release
 
 # push to main      fires exactly once: on the agent's push, while package.json
 #                   still reads 0.0.0. Release 1 needs no human action. Later
-#                   pushes are no-ops release-wise — Plan sees a non-0.0.0
+#                   pushes are no-ops release-wise, Plan sees a non-0.0.0
 #                   version and skips publishing while still verifying.
 # workflow_dispatch every release after the first, with a choice of auth:
 #                   oidc (trusted publishing) or token for the general case,
@@ -12,7 +12,7 @@ name: Release
 #
 # No tag trigger. This workflow creates the tag itself; a tag trigger would race
 # it. The version commit is pushed with GITHUB_TOKEN, which does not retrigger
-# workflows — and even if it did, the version is no longer 0.0.0. Two guards.
+# workflows, and even if it did, the version is no longer 0.0.0. Two guards.
 on:
   push:
     branches: [main]
@@ -104,7 +104,7 @@ jobs:
         if: ${{ steps.plan.outputs.release == 'true' && steps.plan.outputs.auth == 'oidc' }}
         run: npm publish --access public
 
-      # Stages the version rather than publishing it — npm accepts this from
+      # Stages the version rather than publishing it, npm accepts this from
       # any token type with no 2FA prompt, deferring proof-of-presence to a
       # human running `npm stage approve` later. package.json is already
       # bumped by this point, so this stages the same version the other two
@@ -128,7 +128,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "v${{ steps.bump.outputs.version }}" --title "v${{ steps.bump.outputs.version }}" --generate-notes
 
-      # The stage path stops here on purpose — see above. This just leaves a
+      # The stage path stops here on purpose, see above. This just leaves a
       # record of what to do next in the run's own summary.
       - name: Report the staged version
         if: ${{ steps.plan.outputs.release == 'true' && steps.plan.outputs.auth == 'stage' }}

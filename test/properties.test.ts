@@ -39,7 +39,7 @@ describe('6.6 key-collision is reported once, anchored on the key that loses', (
     const collisions = result.changes.filter((c) => c.kind === 'key-collision');
     expect(collisions.length).toBe(1);
     expect(collisions[0]!.pointer).toBe('/1');
-    // Line 1 is `1: one` — the pair that lost. Line 2 is `"1": two` — the winner.
+    // Line 1 is `1: one`: the pair that lost. Line 2 is `"1": two`: the winner.
     expect(collisions[0]!.line).toBe(1);
   });
 });

@@ -16,7 +16,7 @@ import {
   DIFFERENTIAL_DOCS,
 } from './corpus.js';
 
-describe('section 2.1 — the corpus', () => {
+describe('section 2.1: the corpus', () => {
   test('corpus size is exactly 40', () => {
     expect(CORPUS.length).toBe(40);
     expect(CORPUS.length).toBe(CORPUS_SIZE);
@@ -27,7 +27,7 @@ describe('section 2.1 — the corpus', () => {
   });
 });
 
-describe('section 2.2 — corpus outcomes', () => {
+describe('section 2.2: corpus outcomes', () => {
   const results = CORPUS.map((doc) => ({ doc, changes: inspect(doc.source) }));
 
   test('exactly 6 documents report no changes', () => {
@@ -67,7 +67,7 @@ describe('section 2.2 — corpus outcomes', () => {
   });
 });
 
-describe('section 2.4 — per-document kinds (exact set equality)', () => {
+describe('section 2.4: per-document kinds (exact set equality)', () => {
   for (const doc of CORPUS) {
     test(`${doc.name} reports exactly {${doc.kinds.join(', ')}}`, () => {
       const got = new Set(inspect(doc.source).map((c) => c.kind));
@@ -76,7 +76,7 @@ describe('section 2.4 — per-document kinds (exact set equality)', () => {
   }
 });
 
-describe('section 2.3 — per-kind document counts', () => {
+describe('section 2.3: per-kind document counts', () => {
   const perKindDocs: Record<ChangeKind, Set<string>> = Object.fromEntries(
     KINDS.map((k) => [k, new Set<string>()]),
   ) as Record<ChangeKind, Set<string>>;
@@ -99,7 +99,7 @@ describe('section 2.3 — per-kind document counts', () => {
   });
 });
 
-describe('section 2.5 — severity totals', () => {
+describe('section 2.5: severity totals', () => {
   test('severity totals derived from SEVERITY and the per-kind counts match exactly', () => {
     const totals = { dialect: 0, format: 0, loss: 0 };
     for (const kind of KINDS) {
@@ -113,7 +113,7 @@ describe('section 2.5 — severity totals', () => {
   });
 });
 
-describe('section 2.6 — the control', () => {
+describe('section 2.6: the control', () => {
   test('yaml@2.9.0 core schema surfaces an error or warning for exactly 1 of 40 documents', () => {
     const flagged = CORPUS.filter((doc) => {
       const parsed = YAML.parseDocument(doc.source, { schema: 'core' });
@@ -124,7 +124,7 @@ describe('section 2.6 — the control', () => {
   });
 });
 
-describe('section 2.7 — library differential', () => {
+describe('section 2.7: library differential', () => {
   test('js-yaml@5.4.1 and yaml@2.9.0 disagree on exactly 8 of 40 documents', () => {
     const mismatches: string[] = [];
     for (const doc of CORPUS) {

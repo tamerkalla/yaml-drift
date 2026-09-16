@@ -19,7 +19,7 @@ interface Workflow {
   name: string;
   // Parsed as a plain object; the 'on' key is asserted present before use
   // because YAML 1.1 (unlike the 1.2 core schema this package parses with)
-  // resolves a bare `on:` key as the boolean `true`, not the string "on" —
+  // resolves a bare `on:` key as the boolean `true`, not the string "on" 
   // a parser using that dialect would silently look up a key that isn't there.
   on?: Record<string, unknown>;
   jobs: Record<string, { steps: Step[]; permissions?: Record<string, string> }>;
@@ -124,7 +124,7 @@ describe('.github/workflows/release.yml', () => {
     // npm version prints the new version WITH a leading "v" ("v0.1.2"). The
     // release step does `gh release create "v${{ steps.bump.outputs.version }}"`,
     // so if that output were ever npm version's own stdout instead of a fresh
-    // read of package.json, the tag and release title would come out "vv0.1.2" —
+    // read of package.json, the tag and release title would come out "vv0.1.2" 
     // exactly the residue found in three sibling repositories' release history.
     const bump = release.jobs.release.steps.find((s) => s.name === 'Bump and tag');
     const run = bump?.run ?? '';
@@ -145,7 +145,7 @@ describe('.github/workflows/release.yml', () => {
     // `npm stage approve` with their own 2FA. Pushing the version tag or
     // cutting a GitHub Release before that would let git and npm disagree
     // if approval is delayed or rejected, so the stage path must exclude
-    // both — unlike the token and OIDC paths, which do both immediately
+    // both, unlike the token and OIDC paths, which do both immediately
     // after a successful publish.
     const steps = release.jobs.release.steps;
     const stageStep = steps.find((s) => s.name === 'Publish (stage)');

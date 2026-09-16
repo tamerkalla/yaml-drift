@@ -7,7 +7,7 @@ export interface CorpusDoc {
   readonly kinds: readonly ChangeKind[];
 }
 
-// Section 2.1 — the forty documents. Complete and exact; do not add, remove, or reorder.
+// Section 2.1, the forty documents. Complete and exact; do not add, remove, or reorder.
 const RAW_CORPUS: readonly CorpusDoc[] = [
     { name: 'plain-strings', source: 'name: service\nimage: nginx\n', kinds: [] },
     { name: 'plain-numbers', source: 'replicas: 3\nport: 8080\n', kinds: [] },
@@ -89,13 +89,13 @@ const RAW_CORPUS: readonly CorpusDoc[] = [
 
 export const CORPUS: readonly CorpusDoc[] = Object.freeze(RAW_CORPUS.map((d) => Object.freeze(d)));
 
-// Section 2.2 — corpus outcomes.
+// Section 2.2, corpus outcomes.
 export const CORPUS_SIZE = 40;
 export const EMPTY_DOCUMENT_COUNT = 6;
 export const NONEMPTY_DOCUMENT_COUNT = 34;
 export const DISTINCT_KIND_COUNT = 10;
 
-// Section 2.3 — per-kind document counts. The column sums to 40.
+// Section 2.3, per-kind document counts. The column sums to 40.
 export const KIND_DOCUMENT_COUNTS: Readonly<Record<ChangeKind, number>> = Object.freeze({
   dialect: 13,
   'number-literal': 6,
@@ -109,19 +109,19 @@ export const KIND_DOCUMENT_COUNTS: Readonly<Record<ChangeKind, number>> = Object
   cycle: 1,
 });
 
-// Section 2.5 — severity totals, counted over the rows of section 2.3.
+// Section 2.5, severity totals, counted over the rows of section 2.3.
 export const SEVERITY_TOTALS: Readonly<Record<Severity, number>> = Object.freeze({
   dialect: 14,
   format: 14,
   loss: 12,
 });
 
-// Section 2.6 — the control: documents for which yaml@2.9.0's core schema
+// Section 2.6, the control: documents for which yaml@2.9.0's core schema
 // surfaces an error or a warning.
 export const CONTROL_ERROR_OR_WARNING_COUNT = 1;
 export const CONTROL_ERROR_OR_WARNING_DOCS: readonly string[] = Object.freeze(['tag-custom']);
 
-// Section 2.7 — library differential: js-yaml@5.4.1 vs yaml@2.9.0, default
+// Section 2.7, library differential: js-yaml@5.4.1 vs yaml@2.9.0, default
 // settings, JSON.stringify of the parsed result (or the fact that one throws
 // and the other doesn't).
 export const DIFFERENTIAL_COUNT = 8;
